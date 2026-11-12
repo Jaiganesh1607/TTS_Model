@@ -1,0 +1,22 @@
+{
+  "en-us::Hello world, this is a test.": "h ə l oʊ|w ɜː l d,|ð ɪ s|ɪ z|ɐ|t ɛ s t.",
+  "es::Hola mundo, esto es una prueba.": "o l a|m u n d o,|e s t o|e s|u n a|p ɾ u e β a.",
+  "de::Hallo Welt, das ist ein Test.": "h a l oː|v ɛ l t,|d a s| ɪ s t| aɪ n|t ɛ s t.",
+  "fr-fr::Bonjour le monde, c'est un test.": "b ɔ̃ ʒ u ʁ|l ə|m ɔ̃ d,|s ɛ t|œ̃|t ɛ s t.",
+  "hi::नमस्ते दुनिया, यह एक परीक्षण है।": "n ə m ʌ s t eː|d ʊ n ɪ j aː,|j ə h|eː k|p ə ɾ iː k ʃ ə ɳ|h ɛː",
+  "ta::வணக்கம் உலகம், இது ஒரு சோதனை.": "v ʌ ɳ ʌ k k ʌ m|u l ʌ ɡ ʌ m,|i d ʉ|o ɹ ʉ|s oː d ʌ n aɪ.",
+  "ja::こんにちは世界、これはテストです。": "k o̞ n n i tɕ i h ä s e̞ k ä i|k o̞ ɽ e̞ h ä t e̞ s ɯᵝ t o̞ d e̞ s ɯᵝ",
+  "cmn::你好，世界，这是一个测试。": "n i2 χ ɑu2|s. i.5|tɕ iɛ5|ts. o5|s. i.5|j iɜ k o1|tsh o5|s. i.5 ",
+  "it::Ciao mondo, questo è un test.": "tʃ a o|m o n d o,|k w e s t o|ɛ|ʊ n|t ɛ s t.",
+  "ru::Привет мир, это тест.": "p rʲ i vʲ e t|mʲ i r,|ɛ t ʌ|tʲ ɛ s t.",
+  "pt::Olá mundo, este é um teste.": "ɔ l a|m ũ ŋ d ʊ,|ɛ ʃ t ɨ|ɛ|ũ ŋ|t ɛ ʃ t ɨ.",
+  "ar::مرحبا بالعالم، هذا اختبار.": "m r ħ b aː|b i l ʕ aː l a m|h aː ð aː|i χ t i b aː r.",
+  "tr::Merhaba dünya, bu bir testtir.": "m ɛ r h a b a|d ø n j a,|b ʊ|b ɪ r|t ɛ s tː ɪ r.",
+  "ko::안녕 세상, 이것은 테스트입니다.": "ɐ n n j ʌ ŋ|s e s ɐ ŋ,|i q ʌ s ɯ n|t h e s ɯ t h ɯ i p n i d ɐ.",
+  "vi::Chào thế giới, đây là một bài kiểm tra.": "tʃ aː2 w|t eɜ|z əːɜ j ,|ɗ əɪ|l aː2|m o6 t̪| b aː2 j|k iɛ4 m|tʃ aː .",
+  "pl::Witaj świecie, to jest test.": "v i t a j|ɕ fʲ ɛ tɕ ɛ,|t ɔ|j ɛ s t|t ɛ s t.",
+  "nl::Hallo wereld, dit is een test.": "h ɑ l oː|ʋ ɪː r ə l t,|d ɪ t| ɪ s| ə n|t ɛ s t.",
+  "sv::Hej världen, det här är ett test.": "h ɛ j|v ɛː r d ə n,|d eː t|h ɛː r|ɛː r|ɛ t|t ɛ s t.",
+  "el::Γεια σου κόσμε, αυτό είναι ένα τεστ.": "j a|s u|k o s m e,|a f t o|i n e|e n a|t e s t.",
+  "id::Halo dunia, ini adalah tes.": "h a l o|d u n i a,|i n i| a d a l a h|t ɛ s."
+}

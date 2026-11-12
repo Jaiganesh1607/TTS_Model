@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>Multilingual TTS — Architecture Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0C0E; --surface:#12161A; --surface2:#171C21; --line:#232A31; --line-strong:#333B44;
+    --text:#E8ECEF; --text-dim:#9AA5B1; --text-faint:#5C6670;
+    --trained:#3ECF8E; --trained-dim:#1E5E45; --frozen:#5B8FBF; --frozen-dim:#2A4E6E;
+    --io:#8B95A1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    padding:48px 24px 80px; min-height:100vh;
+    overflow-x:hidden;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .wrap{max-width:920px; margin:0 auto; width:100%;}
+
+  header{margin-bottom:40px;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.12em;
+    color:var(--trained); text-transform:uppercase; margin-bottom:12px;
+  }
+  h1{font-size:clamp(22px, 5.5vw, 28px); font-weight:600; letter-spacing:-0.01em; margin-bottom:8px; line-height:1.25;}
+  .sub{color:var(--text-dim); font-size:14px; max-width:560px; line-height:1.6;}
+
+  .modes{
+    display:flex; gap:0; margin:28px 0 8px; border:1px solid var(--line); border-radius:8px;
+    overflow:hidden; width:fit-content; max-width:100%;
+  }
+  .mode-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; padding:12px 20px;
+    min-height:44px; background:var(--surface); color:var(--text-dim); border:none; cursor:pointer;
+    transition:background 0.2s, color 0.2s; flex:1; white-space:nowrap;
+  }
+  .mode-btn:not(:last-child){border-right:1px solid var(--line);}
+  .mode-btn.active{background:var(--trained-dim); color:var(--trained);}
+  .mode-btn:hover:not(.active){color:var(--text);}
+  .mode-btn:focus-visible{outline:2px solid var(--trained); outline-offset:-2px;}
+
+  .legend{display:flex; flex-wrap:wrap; gap:16px 20px; margin:16px 0 32px; font-size:12px; color:var(--text-faint);}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+  .dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .dot.trained{background:var(--trained);}
+  .dot.frozen{background:var(--frozen);}
+
+  .pipeline{position:relative; padding:24px 0 8px;}
+  .track{
+    position:absolute; left:0; right:0; top:50%; height:1px;
+    background:var(--line-strong); z-index:0;
+  }
+  .track-inner{position:relative; height:2px;}
+  .pulse{
+    position:absolute; top:-2px; width:6px; height:6px; border-radius:50%;
+    background:var(--trained); box-shadow:0 0 8px var(--trained);
+    animation:travel 3.5s linear infinite;
+  }
+  @keyframes travel{
+    0%{left:0%; opacity:0;}
+    5%{opacity:1;}
+    95%{opacity:1;}
+    100%{left:100%; opacity:0;}
+  }
+
+  .nodes{position:relative; display:flex; justify-content:space-between; align-items:center; z-index:1; gap:8px;}
+  .node{
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:10px;
+    cursor:pointer; background:transparent; border:none; color:inherit; padding:6px 2px;
+    -webkit-appearance:none; appearance:none; font:inherit;
+  }
+  .node:focus-visible .chip{outline:2px solid var(--trained); outline-offset:2px;}
+  .node-io{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--io);
+    text-align:center; line-height:1.4; min-height:26px;
+  }
+  .chip{
+    width:100%; max-width:150px; padding:14px 10px; border-radius:9px;
+    border:1px solid var(--line-strong); background:var(--surface);
+    text-align:center; transition:all 0.18s;
+  }
+  .chip.trained{border-color:var(--trained-dim);}
+  .chip.frozen{border-color:var(--frozen-dim); border-style:dashed;}
+  .chip-label{font-size:12.5px; font-weight:500; line-height:1.3; word-break:break-word;}
+  .chip-tag{
+    font-family:'IBM Plex Mono', monospace; font-size:9px; text-transform:uppercase;
+    letter-spacing:0.06em; margin-top:4px; display:block;
+  }
+  .chip.trained .chip-tag{color:var(--trained);}
+  .chip.frozen .chip-tag{color:var(--frozen);}
+  .node:hover .chip{border-color:var(--text-dim); transform:translateY(-2px);}
+  .node.selected .chip.trained{background:var(--trained-dim); border-color:var(--trained);}
+  .node.selected .chip.frozen{background:var(--frozen-dim); border-color:var(--frozen);}
+
+  .detail{
+    margin-top:36px; background:var(--surface); border:1px solid var(--line);
+    border-radius:12px; padding:28px 32px; min-height:220px;
+  }
+  .detail-head{display:flex; align-items:baseline; gap:12px; margin-bottom:6px; flex-wrap:wrap;}
+  .detail-title{font-size:19px; font-weight:600;}
+  .detail-badge{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase;
+    letter-spacing:0.08em; padding:3px 8px; border-radius:5px; white-space:nowrap;
+  }
+  .detail-badge.trained{background:var(--trained-dim); color:var(--trained);}
+  .detail-badge.frozen{background:var(--frozen-dim); color:var(--frozen);}
+  .detail-role{color:var(--text-dim); font-size:13.5px; margin-bottom:20px; line-height:1.6;}
+
+  .detail-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px 28px; margin-bottom:20px;}
+  .detail-field{font-size:13px; min-width:0;}
+  .field-label{
+    font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase;
+    letter-spacing:0.08em; color:var(--text-faint); margin-bottom:6px;
+  }
+  .field-value{color:var(--text-dim); line-height:1.6; word-wrap:break-word;}
+  .field-value code{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; background:var(--surface2);
+    padding:1px 5px; border-radius:4px; color:var(--text); word-break:break-word;
+  }
+
+  .detail-why{
+    border-top:1px solid var(--line); padding-top:18px; margin-top:4px;
+    font-size:14px; line-height:1.75; color:var(--text);
+  }
+  .detail-why .field-label{margin-bottom:8px;}
+
+  footer{margin-top:48px; font-size:11.5px; color:var(--text-faint); font-family:'IBM Plex Mono', monospace; line-height:1.6;}
+
+  /* ---- Tablet ---- */
+  @media (max-width:860px){
+    body{padding:40px 20px 64px;}
+    .chip{max-width:130px;}
+  }
+
+  /* ---- Mobile: stacked pipeline with a vertical connector ---- */
+  @media (max-width:680px){
+    body{padding:32px 16px 56px;}
+    .sub{font-size:13.5px;}
+    .modes{width:100%; margin:24px 0 8px;}
+    .mode-btn{padding:12px 10px; font-size:12.5px;}
+    .legend{margin:14px 0 28px; gap:12px 18px; font-size:11.5px;}
+
+    .pipeline{padding:8px 0 8px;}
+    .track{display:none;}
+    .nodes{
+      flex-direction:column; align-items:stretch; gap:0;
+      position:relative;
+    }
+    /* vertical connector line running through the stacked nodes */
+    .nodes::before{
+      content:"";
+      position:absolute; left:20px; top:28px; bottom:28px; width:1px;
+      background:var(--line-strong); z-index:0;
+    }
+    .node{
+      flex-direction:row; align-items:center; justify-content:flex-start;
+      width:100%; padding:10px 0; gap:14px; text-align:left;
+    }
+    .node-io{
+      display:none;
+    }
+    .chip{
+      max-width:none; flex:1; min-width:0; text-align:left;
+      padding:13px 14px; position:relative; z-index:1;
+    }
+    .node:hover .chip{transform:none;}
+
+    .detail{padding:20px 18px; margin-top:24px; min-height:0;}
+    .detail-title{font-size:17px;}
+    .detail-grid{grid-template-columns:1fr; gap:16px;}
+    .detail-why{font-size:13.5px; line-height:1.65;}
+  }
+
+  @media (max-width:380px){
+    .chip-label{font-size:12px;}
+    .mode-btn{font-size:11.5px; padding:11px 6px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .pulse{animation:none; display:none;}
+    .node:hover .chip{transform:none;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">System architecture · training + inference</div>
+    <h1>Multilingual TTS signal path</h1>
+    <p class="sub">Click any stage below to see exactly what it does, what flows in and out of it, and why it's built that way. Toggle between the training-time and inference-time pipelines — they differ by one stage.</p>
+  </header>
+
+  <div class="modes">
+    <button class="mode-btn active" id="btn-train" onclick="setMode('train')">TRAINING</button>
+    <button class="mode-btn" id="btn-infer" onclick="setMode('infer')">INFERENCE</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="dot trained"></span> trained from scratch</div>
+    <div class="legend-item"><span class="dot frozen"></span> frozen / off-the-shelf</div>
+  </div>
+
+  <div class="pipeline">
+    <div class="track"><div class="track-inner">
+      <div class="pulse" style="animation-delay:0s"></div>
+      <div class="pulse" style="animation-delay:1.2s"></div>
+      <div class="pulse" style="animation-delay:2.4s"></div>
+    </div></div>
+    <div class="nodes" id="nodes"></div>
+  </div>
+
+  <div class="detail" id="detail"></div>
+
+  <footer>Assignment reference · duration-based non-autoregressive TTS · single-GPU constrained design</footer>
+</div>
+
+<script>
+const STAGES = {
+  train: [
+    {id:'text', label:'Text + language ID', tag:null, io:'input', type:'io',
+      role:'Raw input to the pipeline.',
+      inputs:'Written text in the target language, plus a language identifier tag.',
+      outputs:'Passed directly to the phonemizer.',
+      why:'The language ID is what lets one shared model serve many languages — every downstream trainable stage conditions on it.'},
+    {id:'phon', label:'Phonemizer', tag:'frozen · not trained', type:'frozen',
+      role:'Converts written text into phoneme symbols — a pronunciation-level representation, not raw letters.',
+      inputs:'Text + language ID.',
+      outputs:'A sequence of phoneme symbols, one per sound unit.',
+      why:'This is an off-the-shelf tool (e.g. espeak-ng), never trained. Phonemes are a shorter, more regular target than raw text, which makes everything downstream easier to learn from limited data.'},
+    {id:'ssl', label:'Frozen multilingual encoder', tag:'frozen · training only', type:'frozen',
+      role:'A pretrained multilingual speech model (e.g. XLS-R or mHuBERT) used purely as a fixed feature extractor on reference audio.',
+      inputs:'Ground-truth reference audio for each training example.',
+      outputs:'Rich acoustic-linguistic feature targets, cached to disk once and reused every epoch.',
+      why:'This model was pretrained on huge multilingual audio by someone else. Using it frozen (no gradients, no fine-tuning) gives the trainable stages a multilingual head start without needing to personally collect huge per-language datasets — and it costs zero training-time VRAM.'},
+    {id:'dur', label:'Duration predictor', tag:'trained from scratch', type:'trained',
+      role:'Predicts how many audio frames each phoneme should occupy.',
+      inputs:'Phoneme embeddings + language ID + speaker ID.',
+      outputs:'A duration value per phoneme; trained against ground-truth durations from forced alignment.',
+      why:'Built as <code>stochastic</code> (samples natural variation) rather than a single fixed prediction — this is the main fix for robotic, metronomic timing. Ground-truth durations are used here at training time (teacher forcing), decoupling this component\'s errors from the decoder\'s.'},
+    {id:'dec', label:'Decoder', tag:'trained from scratch', type:'trained',
+      role:'Turns phoneme + timing information into frame-level acoustic features.',
+      inputs:'Phoneme embeddings upsampled by ground-truth durations, + language ID + speaker ID.',
+      outputs:'Frame-level acoustic features, compared against the real target from the frozen encoder.',
+      why:'Trained with a reconstruction loss (closeness to real features), an adversarial loss (via the discriminator, for realism), and optionally a KL term if using a variational latent — together these push output away from a blurry statistical average toward natural detail.'},
+    {id:'voc', label:'Vocoder + discriminator', tag:'trained from scratch · adversarial', type:'trained',
+      role:'Converts acoustic features into a raw, playable audio waveform.',
+      inputs:'Frame-level features from the decoder.',
+      outputs:'Audio waveform; discriminator judges real vs. generated audio during training only.',
+      why:'The discriminator\'s adversarial signal is what most directly fixes flat/robotic timbre — it forces the vocoder to produce sharp, realistic detail rather than an averaged, papery sound.'},
+  ],
+  infer: [
+    {id:'text', label:'Text + language ID', tag:null, io:'input', type:'io',
+      role:'Raw input to the pipeline.',
+      inputs:'Written text in the target language, plus a language identifier tag.',
+      outputs:'Passed directly to the phonemizer.',
+      why:'Same role as at training time — this is what a user or application actually provides at generation time.'},
+    {id:'phon', label:'Phonemizer', tag:'frozen · not trained', type:'frozen',
+      role:'Converts written text into phoneme symbols.',
+      inputs:'Text + language ID.',
+      outputs:'A sequence of phoneme symbols.',
+      why:'Identical, lightweight step at inference — cheap enough to run on-device with no GPU dependency.'},
+    {id:'dur', label:'Duration predictor', tag:'trained from scratch', type:'trained',
+      role:'Predicts phoneme durations — but now using its own trained prediction, since no ground truth exists at generation time.',
+      inputs:'Phoneme embeddings + language ID + speaker ID.',
+      outputs:'Sampled durations with natural variation.',
+      why:'This is the one place inference structurally differs from training: teacher forcing is gone, so timing quality here fully depends on how well this stage learned during training.'},
+    {id:'dec', label:'Decoder', tag:'trained from scratch', type:'trained',
+      role:'Turns phonemes + predicted timing into acoustic features.',
+      inputs:'Phoneme embeddings upsampled by the <code>predicted</code> durations, + language ID + speaker ID.',
+      outputs:'Frame-level acoustic features.',
+      why:'Runs a single forward pass — no iterative refinement — which is what makes the whole pipeline fast at inference.'},
+    {id:'voc', label:'Vocoder', tag:'trained from scratch', type:'trained',
+      role:'Converts acoustic features into the final audio waveform.',
+      inputs:'Frame-level features from the decoder.',
+      outputs:'Playable audio waveform.',
+      why:'The discriminator from training is not used here — only the generator half of the vocoder runs at inference.'},
+    {id:'audio', label:'Audio output', tag:null, io:'output', type:'io',
+      role:'Final result delivered to the user.',
+      inputs:'Waveform from the vocoder.',
+      outputs:'—',
+      why:'Notice the frozen multilingual encoder from training is entirely absent here — inference never depends on it, so there\'s no large pretrained model to run at generation time.'},
+  ]
+};
+
+let mode = 'train';
+let selected = 0;
+
+function setMode(m){
+  mode = m;
+  selected = 0;
+  document.getElementById('btn-train').classList.toggle('active', m==='train');
+  document.getElementById('btn-infer').classList.toggle('active', m==='infer');
+  render();
+}
+
+function render(){
+  const stages = STAGES[mode];
+  const nodesEl = document.getElementById('nodes');
+  nodesEl.innerHTML = stages.map((s,i)=>`
+    <button class="node ${i===selected?'selected':''}" onclick="select(${i})" aria-pressed="${i===selected}">
+      <div class="node-io">${s.io ? (s.io==='input'?'▸ pipeline start':'pipeline end ▸') : ''}</div>
+      <div class="chip ${s.type}">
+        <div class="chip-label">${s.label}</div>
+        ${s.tag ? `<span class="chip-tag">${s.tag}</span>` : ''}
+      </div>
+    </button>
+  `).join('');
+  renderDetail();
+}
+
+function select(i){ selected = i; render(); }
+
+function renderDetail(){
+  const s = STAGES[mode][selected];
+  const badgeClass = s.type === 'frozen' ? 'frozen' : (s.type === 'trained' ? 'trained' : '');
+  const badgeText = s.type === 'frozen' ? 'frozen' : (s.type === 'trained' ? 'trained from scratch' : 'pipeline boundary');
+  document.getElementById('detail').innerHTML = `
+    <div class="detail-head">
+      <div class="detail-title">${s.label}</div>
+      ${s.type!=='io' ? `<span class="detail-badge ${badgeClass}">${badgeText}</span>` : ''}
+    </div>
+    <div class="detail-role">${s.role}</div>
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="field-label">Input</div>
+        <div class="field-value">${s.inputs}</div>
+      </div>
+      <div class="detail-field">
+        <div class="field-label">Output</div>
+        <div class="field-value">${s.outputs}</div>
+      </div>
+    </div>
+    <div class="detail-why">
+      <div class="field-label">Why it's built this way</div>
+      ${s.why}
+    </div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
