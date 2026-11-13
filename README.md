@@ -143,20 +143,7 @@ The system will be evaluated using the following metrics:
 | Training | From Scratch |
 | Target Languages | 6–10 |
 
-## 📌 Project Development Roadmap
 
-- [ ] Finalize target languages.
-- [ ] Collect multilingual datasets.
-- [ ] Prepare and preprocess audio and text.
-- [ ] Implement phonemization.
-- [ ] Perform forced alignment.
-- [ ] Extract frozen encoder features.
-- [ ] Implement duration predictor.
-- [ ] Implement decoder.
-- [ ] Implement vocoder and discriminator.
-- [ ] Train the model.
-- [ ] Evaluate speech quality and intelligibility.
-- [ ] Optimize inference performance.
 
 ## 🔮 Future Improvements
 
